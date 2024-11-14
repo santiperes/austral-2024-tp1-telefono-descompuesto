@@ -1,0 +1,243 @@
+openapi: 3.0.3
+info:
+  description: Title
+  title: TP1 - Teléfono descompuesto
+  version: 1.0.0
+servers:
+- url: /
+paths:
+  /register-node:
+    post:
+      description: Registra un nuevo nodo
+      operationId: registerNode
+      parameters:
+      - explode: true
+        in: query
+        name: host
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: port
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/registerResponse'
+          description: Todo bien
+      x-accepts:
+      - application/json
+  /relay:
+    post:
+      description: Firma un mensaje y lo manda al siguiente
+      operationId: relayMessage
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              message:
+                contentType: '*/*'
+                style: form
+              signatures:
+                contentType: application/json
+                style: form
+            schema:
+              $ref: '#/components/schemas/relayMessage_request'
+        description: El mensaje y las firmas anteriores
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/signature'
+          description: mensaje recibido y reenviado.
+      x-content-type: multipart/form-data
+      x-accepts:
+      - application/json
+  /play:
+    post:
+      description: Comienza el juego!
+      operationId: sendMessage
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              format: base64
+              type: string
+        description: El mensaje a enviar por la red telefónica
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/playResponse'
+          description: La red telefónica funcionó bien!
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/playResponse'
+          description: La red telefónica falló
+      x-content-type: '*/*'
+      x-accepts:
+      - application/json
+components:
+  schemas:
+    base64String:
+      format: base64
+      type: string
+    registerRequest:
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+        name:
+          type: string
+      required:
+      - host
+      - name
+      - port
+      type: object
+    registerResponse:
+      example:
+        nextPort: 0
+        nextHost: nextHost
+        uuid: uuid
+        hash: hash
+      properties:
+        nextHost:
+          type: string
+        nextPort:
+          type: integer
+        uuid:
+          type: string
+        hash:
+          type: string
+      required:
+      - hash
+      - nextHost
+      - nextPort
+      - uuid
+      type: object
+    signature:
+      example:
+        name: name
+        contentLength: 0
+        contentType: contentType
+        hash: hash
+      properties:
+        name:
+          description: El nombre del nodo que firmo
+          type: string
+        contentType:
+          description: El hash de la firma del nodo
+          type: string
+        contentLength:
+          description: La longitud del contenido
+          type: integer
+        hash:
+          description: El hash del contenido calculado por el nodo
+          type: string
+      required:
+      - hash
+      - name
+      type: object
+    signatures:
+      example:
+        items:
+        - name: name
+          contentLength: 0
+          contentType: contentType
+          hash: hash
+        - name: name
+          contentLength: 0
+          contentType: contentType
+          hash: hash
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/signature'
+          type: array
+      required:
+      - items
+      type: object
+    playResponse:
+      example:
+        receivedContentType: receivedContentType
+        receivedLength: 6
+        contentResult: contentResult
+        originalLength: 0
+        originalHash: originalHash
+        receivedHash: receivedHash
+        signatures:
+          items:
+          - name: name
+            contentLength: 0
+            contentType: contentType
+            hash: hash
+          - name: name
+            contentLength: 0
+            contentType: contentType
+            hash: hash
+        originalContentType: originalContentType
+      properties:
+        contentResult:
+          description: el resultado del contenido
+          type: string
+        originalContentType:
+          description: el tipo de contenido que enviaste
+          type: string
+        originalLength:
+          description: la longitud original que enviaste
+          type: integer
+        originalHash:
+          description: el hash del mensaje original que enviaste
+          type: string
+        receivedContentType:
+          description: el tipo de contenido que volvió
+          type: string
+        receivedLength:
+          description: la longitud que volvió
+          type: integer
+        receivedHash:
+          description: el hash del mensaje que volvió
+          type: string
+        signatures:
+          $ref: '#/components/schemas/signatures'
+      required:
+      - contentResult
+      - originalContentType
+      - originalHash
+      - originalLength
+      - receivedContentType
+      - receivedHash
+      - receivedLength
+      - signatures
+      type: object
+    relayMessage_request:
+      properties:
+        message:
+          $ref: '#/components/schemas/base64String'
+        signatures:
+          $ref: '#/components/schemas/signatures'
+      required:
+      - message
+      - signatures
+      type: object
+
